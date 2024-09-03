@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Sequence Generator with PnR Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 5px;
+        }
+        #output, #average-output {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fibonacci Sequence Generator with PnR Model</h1>
+    
+    <div>
+        <label for="min-input">Minimum Value:</label>
+        <input type="number" id="min-input" min="0">
+    </div>
+    
+    <div>
+        <label for="max-input">Maximum Value:</label>
+        <input type="number" id="max-input" min="0">
+    </div>
+    
+    <button id="generate-btn">Generate</button>
+    
+    <h2>Fibonacci Sequence in Range</h2>
+    <div id="output"></div>
+    
+    <h2>Average of Fibonacci Numbers</h2>
+    <div id="average-output"></div>
+
+    <script>
+ // Global PnR set
+// Global PnR set
+let globalPnR = {
+    "Minimum value": "",
+    "Maximum value": "",
+    "Current value": "",
+    "Previous value": "",
+    "Generated sequence": [],
+    "Generated-seq": "n",
+    "Generated-average": "n",
+    "Average value": ""
+};
+
+class Intention {
+    constructor(prompt, value) {
+        this.prompt = prompt;
+        this.value = value;
+    }
+}
+
+class Object {
+    constructor(name) {
+        this.name = name;
+    }
+
+    receive(intention) {
+        console.log(`${this.name} receiving intention: ${intention.prompt}`);
+        return intention;
+    }
+
+    reflect(intention) {
+        console.log(`${this.name} reflecting on intention: ${intention.prompt}`);
+        return intention;
+    }
+}
+
+class DesignChunk {
+    constructor(name, object, action) {
+        this.name = name;
+        this.object = object;
+        this.action = action;
+    }
+
+    emit(intention) {
+        console.log(`${this.name} emitting intention: ${intention.prompt}`);
+        return intention;
+    }
+
+    absorb(intention) {
+        console.log(`${this.name} absorbing intention result: ${intention.value}`);
+        return this.action(intention);
+    }
+}
+
+// ... (previous code for globalPnR, Intention, Object, and DesignChunk remains the same)
+
+class CPUX {
+    constructor(name, designChunks, readyCondition) {
+        this.name = name;
+        this.designChunks = designChunks;
+        this.readyCondition = readyCondition;
+    }
+
+    isReady() {
+        return this.readyCondition();
+    }
+
+    async executeFirstChunk(intention) {
+        if (this.designChunks.length > 0) {
+            const chunk = this.designChunks[0];
+            intention = chunk.object.receive(intention);
+            intention = chunk.object.reflect(intention);
+            intention = await chunk.absorb(intention);
+            return chunk.emit(intention);
+        }
+        return new Intention("Completed", false);
+    }
+}
+
+// Objects
+const fibonacciObject = new Object("FibonacciSequence");
+const averageObject = new Object("AverageCalculator");
+
+// Design Chunks
+const generateNextFibonacciDC = new DesignChunk("generateNextFibonacci", fibonacciObject, async (intention) => {
+    const min = parseInt(globalPnR["Minimum value"]);
+    const max = parseInt(globalPnR["Maximum value"]);
+    let current = globalPnR["Current value"];
+    let previous = globalPnR["Previous value"];
+    let sequence = globalPnR["Generated sequence"];
+
+    if (current === "") {
+        current = 0;
+        previous = 1;
+    } else {
+        const next = parseInt(current) + parseInt(previous);
+        previous = current;
+        current = next;
+    }
+
+    // Simulate a more complex computation with a small delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    if (current <= max) {
+        if (current >= min) {
+            sequence.push(current);
+        }
+        globalPnR["Current value"] = current;
+        globalPnR["Previous value"] = previous;
+        globalPnR["Generated sequence"] = sequence;
+        intention.value = true;
+    } else {
+        globalPnR["Generated-seq"] = "y";
+        intention.value = false;
+    }
+
+    document.getElementById("output").textContent = sequence.join(", ");
+    return intention;
+});
+
+const calculateAverageDC = new DesignChunk("calculateAverage", averageObject, async (intention) => {
+    const sequence = globalPnR["Generated sequence"];
+    if (sequence.length > 0) {
+        const average = sequence.reduce((a, b) => a + b, 0) / sequence.length;
+        globalPnR["Average value"] = average.toFixed(2);
+        globalPnR["Generated-average"] = "y";
+        document.getElementById("average-output").textContent = globalPnR["Average value"];
+    } else {
+        document.getElementById("average-output").textContent = "No sequence generated";
+    }
+    intention.value = false;
+    return intention;
+});
+
+// CPUXs
+const generateFibonacciCPUX = new CPUX(
+    "Generate Fibonacci",
+    [generateNextFibonacciDC],
+    () => globalPnR["Generated-seq"] === "n"
+);
+
+const calculateAverageCPUX = new CPUX(
+    "Calculate Average",
+    [calculateAverageDC],
+    () => globalPnR["Generated-seq"] === "y" && globalPnR["Generated-average"] === "n"
+);
+
+// Intention Ring
+async function intentionRing() {
+    const cpuxs = [generateFibonacciCPUX, calculateAverageCPUX];
+    let completed = false;
+    let intention = new Intention("Start computation", true);
+
+    while (!completed) {
+        completed = true;
+        const readyCPUXs = cpuxs.filter(cpux => cpux.isReady());
+        
+        if (readyCPUXs.length > 0) {
+            const results = await Promise.all(readyCPUXs.map(cpux => cpux.executeFirstChunk(intention)));
+            for (const result of results) {
+                if (result.value) {
+                    completed = false;
+                    intention = result;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Event Listener
+document.getElementById("generate-btn").addEventListener("click", async () => {
+    globalPnR["Minimum value"] = document.getElementById("min-input").value;
+    globalPnR["Maximum value"] = document.getElementById("max-input").value;
+    globalPnR["Current value"] = "";
+    globalPnR["Previous value"] = "";
+    globalPnR["Generated sequence"] = [];
+    globalPnR["Generated-seq"] = "n";
+    globalPnR["Generated-average"] = "n";
+    globalPnR["Average value"] = "";
+
+    intentionRing();
+});
+    </script>
+</body>
+</html>

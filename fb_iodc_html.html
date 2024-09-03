@@ -14,7 +14,7 @@
   <button onclick="generateFibonacci()">Generate</button>
   <h2>Fibonacci Sequence in Range</h2>
   <div id="output"></div>
-
+  
   <script>
     // Existing classes and functions go here
 
@@ -83,6 +83,7 @@
           executed = false;
           for (const chunk of this.pnr.designChunks) {
             if (chunk.name === "Setup first two members in the fbsequence" && this.pnr.fbsequence.started === 'N') {
+
               chunk.absorbIntention(this.pnr);
               executed = true;
             } else if (chunk.name === "Find next Fibonacci sequence" && this.pnr.fbsequence.started === 'Y' && this.pnr.fbsequence.genComplete === 'N') {
@@ -100,14 +101,14 @@
     }
 
     function generateFibonacci() {
-      const min = parseInt(document.getElementById("min").value);
-      const max = parseInt(document.getElementById("max").value);
+    //   const min = parseInt(document.getElementById("min").value);
+    //   const max = parseInt(document.getElementById("max").value);
 
       // Initialize PnR set
       const pnr = {
         fbsequence: new Fbsequence(),
-        min: min,
-        max: max,
+        min: 0,
+        max: 0,
         fibonacciInRange: [],
         designChunks: []
       };
@@ -119,6 +120,9 @@
             sequence: [0, 1],
             started: 'Y'
           });
+          pnr.min = parseInt(document.getElementById("min").value);
+          pnr.max = parseInt(document.getElementById("max").value);
+
           
           startSequenceChunk.emitIntention(intention, pnr);
         }
